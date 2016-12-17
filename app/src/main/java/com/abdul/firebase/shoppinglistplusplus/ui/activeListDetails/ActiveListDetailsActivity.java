@@ -49,9 +49,8 @@ public class ActiveListDetailsActivity extends BaseActivity {
 
             @Override
             public void onCancelled(FirebaseError firebaseError) {
-                Log.e(LOG_TAG,
-                        getString(R.string.log_error_the_read_failed) +
-                                firebaseError.getMessage());
+                Log.e(LOG_TAG, getString(R.string.log_error_the_read_failed) +
+                               firebaseError.getMessage());
             }
         });
 

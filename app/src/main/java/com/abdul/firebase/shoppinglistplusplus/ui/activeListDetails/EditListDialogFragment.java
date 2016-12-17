@@ -3,6 +3,7 @@ package com.abdul.firebase.shoppinglistplusplus.ui.activeListDetails;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -21,7 +22,7 @@ import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
 /**
  * A simple {@link Fragment} subclass.
  */
-public abstract class EditListDialogFragment extends android.app.DialogFragment {
+public abstract class EditListDialogFragment extends DialogFragment {
     EditText mEditTextForList;
     int mResource;
 

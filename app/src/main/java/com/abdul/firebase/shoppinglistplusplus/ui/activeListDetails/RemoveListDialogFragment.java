@@ -2,6 +2,7 @@ package com.abdul.firebase.shoppinglistplusplus.ui.activeListDetails;
 
 
 import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
@@ -12,7 +13,7 @@ import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
 /**
  * Lets the user remove active shopping list
  */
-public class RemoveListDialogFragment extends android.app.DialogFragment {
+public class RemoveListDialogFragment extends DialogFragment {
     final static String LOG_TAG = RemoveListDialogFragment.class.getSimpleName();
 
     /**

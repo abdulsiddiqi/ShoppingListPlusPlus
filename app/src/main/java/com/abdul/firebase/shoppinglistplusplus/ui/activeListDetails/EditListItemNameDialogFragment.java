@@ -10,16 +10,15 @@ import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
  * Lets user edit list item name for all copies of the current list
  */
 public class EditListItemNameDialogFragment extends EditListDialogFragment {
-
+    private String old_title;
+    private static final String LOG_TAG = EditListItemNameDialogFragment.class.getSimpleName();
     /**
      * Public static constructor that creates fragment and passes a bundle with data into it when adapter is created
      */
     public static EditListItemNameDialogFragment newInstance(ShoppingList shoppingList) {
         EditListItemNameDialogFragment editListItemNameDialogFragment = new EditListItemNameDialogFragment();
-
         Bundle bundle = EditListDialogFragment.newInstanceHelper(shoppingList, R.layout.dialog_edit_item);
         editListItemNameDialogFragment.setArguments(bundle);
-
         return editListItemNameDialogFragment;
     }
 
@@ -29,6 +28,7 @@ public class EditListItemNameDialogFragment extends EditListDialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
     }
 
 
@@ -46,5 +46,6 @@ public class EditListItemNameDialogFragment extends EditListDialogFragment {
      * Change selected list item name to the editText input if it is not empty
      */
     protected void doListEdit() {
+
     }
 }
