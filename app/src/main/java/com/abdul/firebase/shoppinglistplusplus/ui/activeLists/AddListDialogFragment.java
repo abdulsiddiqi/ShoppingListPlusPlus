@@ -92,10 +92,10 @@ public class AddListDialogFragment extends DialogFragment {
      * Add new active list
      */
     public void addShoppingList() {
-        Firebase ref = new Firebase(Constants.FIREBASE_URL);
+        Firebase roofref = new Firebase(Constants.FIREBASE_URL).child(Constants.FIREBASE_LOCATION_ACTIVE_LIST).push();
         String userEnteredName = mEditTextListName.getText().toString();
         ShoppingList sl = new ShoppingList(userEnteredName,"Anonymous");
-        ref.child(Constants.FIREBASE_LOCATION_ACTIVE_LIST).setValue(sl);
+        roofref.setValue(sl);
     }
 
 }

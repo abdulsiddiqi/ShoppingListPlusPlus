@@ -11,7 +11,8 @@ import java.util.HashMap;
 public class ShoppingList {
     private String listName;
     private String owner;
-    private HashMap<String,Object> dateLastChanged;
+    private HashMap<String,Object> timestampLastChanged;
+    private HashMap<String,Object> timestampCreated;
     public ShoppingList() {
     }
 
@@ -19,8 +20,9 @@ public class ShoppingList {
         this.owner = owner;
         this.listName = listName;
         HashMap<String, Object> dateLastChangedObj = new HashMap<String, Object>();
-        dateLastChangedObj.put("date", ServerValue.TIMESTAMP);
-        this.dateLastChanged = dateLastChangedObj;
+        dateLastChangedObj.put("timestamp", ServerValue.TIMESTAMP);
+        this.timestampLastChanged = dateLastChangedObj;
+        this.timestampCreated = dateLastChangedObj;
     }
 
     public String getListName() {
@@ -31,12 +33,12 @@ public class ShoppingList {
         return owner;
     }
 
-    public HashMap<String, Object> getDateLastChanged() {
-        return dateLastChanged;
-    }
+    public HashMap<String, Object> getTimestampLastChanged() { return timestampLastChanged;}
+
+    public HashMap<String,Object> getTimestampCreated() { return timestampCreated;}
 
     @JsonIgnore
-    public long getDateLastChangedLong() {
-        return (long) dateLastChanged.get("date");
+    public long getTimeStampLastChanged() {
+        return (long) timestampLastChanged.get("timestamp");
     }
 }
