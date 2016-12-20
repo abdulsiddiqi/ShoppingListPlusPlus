@@ -41,4 +41,9 @@ public class ShoppingList {
     public long getTimeStampLastChanged() {
         return (long) timestampLastChanged.get("timestamp");
     }
+
+    @JsonIgnore
+    public long getTimeStampCreated() {
+        return (long) timestampCreated.get("timestamp");
+    }
 }

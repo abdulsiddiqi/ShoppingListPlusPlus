@@ -24,6 +24,8 @@ public final class Constants {
     public final static String FIREBASE_URL_ACTIVE_LIST = "https://shoplistplusplus-as-39f98.firebaseio.com/active_lists";
     public static final String KEY_LAYOUT_RESOURCE = "LAYOUT_RESOURCE";
     public static final String KEY_LIST_NAME = "LIST_NAME";
+    public static final String KEY_PUSH_ID = "PUSH_ID";
+    public static final String KEY_TIMESTAMP_CREATED = "TIMESTAMP_CREATED";
     public static final String FIREBASE_PROPERTY_TIMESTAMP_LAST_CHANGED = "dateLastChanged";
 
     /**

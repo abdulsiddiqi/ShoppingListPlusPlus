@@ -1,6 +1,7 @@
 package com.abdul.firebase.shoppinglistplusplus.ui.activeListDetails;
 
 import android.app.DialogFragment;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -21,6 +22,7 @@ import com.firebase.client.ValueEventListener;
 
 public class ActiveListDetailsActivity extends BaseActivity {
     private static String LOG_TAG = ActiveListDetailsActivity.class.getSimpleName();
+    private String push_id;
     private Firebase mActiveListRef;
     private ListView mListView;
     private ShoppingList mShoppingList;
@@ -28,7 +30,10 @@ public class ActiveListDetailsActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_active_list_details);
-        mActiveListRef = new Firebase(Constants.FIREBASE_URL_ACTIVE_LIST);
+        //getting the push_id;
+        Intent intent = getIntent();
+        push_id = intent.getStringExtra(Constants.KEY_PUSH_ID);
+        mActiveListRef = new Firebase(Constants.FIREBASE_URL_ACTIVE_LIST).child(push_id);
         initializeScreen();
 
         /* Calling invalidateOptionsMenu causes onCreateOptionsMenu to be called */
@@ -159,7 +164,7 @@ public class ActiveListDetailsActivity extends BaseActivity {
     public void removeList() {
         /* Create an instance of the dialog fragment and show it */
         Log.v(LOG_TAG, "removeList");
-        DialogFragment dialog = RemoveListDialogFragment.newInstance(mShoppingList);
+        DialogFragment dialog = RemoveListDialogFragment.newInstance(mShoppingList,push_id);
         dialog.show(getFragmentManager(), "RemoveListDialogFragment");
     }
 
@@ -179,7 +184,7 @@ public class ActiveListDetailsActivity extends BaseActivity {
     public void showEditListNameDialog() {
         /* Create an instance of the dialog fragment and show it */
         Log.v(LOG_TAG, "EditListName");
-        DialogFragment dialog = EditListNameDialogFragment.newInstance(mShoppingList);
+        DialogFragment dialog = EditListNameDialogFragment.newInstance(mShoppingList,push_id);
         dialog.show(this.getFragmentManager(), "EditListNameDialogFragment");
     }
 

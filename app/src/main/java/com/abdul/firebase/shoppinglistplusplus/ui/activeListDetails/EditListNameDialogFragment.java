@@ -17,15 +17,19 @@ import java.util.HashMap;
  */
 public class EditListNameDialogFragment extends EditListDialogFragment {
     private String old_title;
+    private String push_id;
+    private long timestampCreated;
     private static final String LOG_TAG = ActiveListDetailsActivity.class.getSimpleName();
 
     /**
      * Public static constructor that creates fragment and passes a bundle with data into it when adapter is created
      */
-    public static EditListNameDialogFragment newInstance(ShoppingList shoppingList) {
+    public static EditListNameDialogFragment newInstance(ShoppingList shoppingList,String push_id) {
         EditListNameDialogFragment editListNameDialogFragment = new EditListNameDialogFragment();
         Bundle bundle = EditListDialogFragment.newInstanceHelper(shoppingList, R.layout.dialog_edit_list);
         bundle.putString(Constants.KEY_LIST_NAME,shoppingList.getListName());
+        bundle.putString(Constants.KEY_PUSH_ID,push_id);
+        bundle.putLong(Constants.KEY_TIMESTAMP_CREATED,shoppingList.getTimeStampCreated());
         editListNameDialogFragment.setArguments(bundle);
         Log.v(LOG_TAG, "newInstance");
         return editListNameDialogFragment;
@@ -51,6 +55,8 @@ public class EditListNameDialogFragment extends EditListDialogFragment {
         Bundle bundle = getArguments();
         if (bundle != null) {
             old_title = bundle.getString(Constants.KEY_LIST_NAME);
+            push_id = bundle.getString(Constants.KEY_PUSH_ID);
+            timestampCreated = bundle.getLong(Constants.KEY_TIMESTAMP_CREATED);
             helpSetDefaultValueEditText(old_title);
         }
         return dialog;
@@ -64,14 +70,17 @@ public class EditListNameDialogFragment extends EditListDialogFragment {
 
         String newListName = mEditTextForList.getText().toString();
         if (newListName.length() > 0 &&!newListName.equals(old_title)) {
-            Firebase ref = new Firebase(Constants.FIREBASE_URL).child(Constants.FIREBASE_LOCATION_ACTIVE_LIST);
+            Firebase ref = new Firebase(Constants.FIREBASE_URL_ACTIVE_LIST).child(push_id);
             //hashmap containing all the updated data
             HashMap<String,Object> shoppingListUpdatedProperties = new HashMap<>();
             shoppingListUpdatedProperties.put("listName", newListName);
             shoppingListUpdatedProperties.put("owner", "Anonymous");
-            HashMap<String, Object> dateLastChangedObj = new HashMap<String, Object>();
-            dateLastChangedObj.put("date", ServerValue.TIMESTAMP);
-            shoppingListUpdatedProperties.put("dateLastChanged",dateLastChangedObj);
+            HashMap<String, Object> dateLastChangedObj = new HashMap<>();
+            dateLastChangedObj.put("timestamp", ServerValue.TIMESTAMP);
+            HashMap<String,Object> dateCreatedObj = new HashMap<>();
+            dateCreatedObj.put("timestamp",timestampCreated);
+            shoppingListUpdatedProperties.put("timestampLastChanged",dateLastChangedObj);
+            shoppingListUpdatedProperties.put("timestampCreated", dateCreatedObj);
             ref.updateChildren(shoppingListUpdatedProperties);
         }
     }

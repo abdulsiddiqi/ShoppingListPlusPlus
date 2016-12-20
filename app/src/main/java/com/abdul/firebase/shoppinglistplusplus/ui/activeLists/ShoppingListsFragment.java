@@ -1,6 +1,7 @@
 package com.abdul.firebase.shoppinglistplusplus.ui.activeLists;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -11,6 +12,7 @@ import android.widget.ListView;
 
 import com.abdul.firebase.shoppinglistplusplus.R;
 import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
+import com.abdul.firebase.shoppinglistplusplus.ui.activeListDetails.ActiveListDetailsActivity;
 import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
 import com.firebase.client.Firebase;
 
@@ -75,7 +77,10 @@ public class ShoppingListsFragment extends Fragment {
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+                Intent intent = new Intent(getActivity(), ActiveListDetailsActivity.class);
+                Firebase firebase = mShoppingListAdapter.getRef(position);
+                intent.putExtra(Constants.KEY_PUSH_ID,firebase.getKey());
+                startActivity(intent);
             }
         });
 

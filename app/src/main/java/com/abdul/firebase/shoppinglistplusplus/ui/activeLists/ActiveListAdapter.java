@@ -33,7 +33,6 @@ public class ActiveListAdapter extends FirebaseListAdapter<ShoppingList> {
      */
     @Override
     protected void populateView(View view, ShoppingList list) {
-        // TODO This is where you need to populate the single_active_list layout with
         // the data in the current shopping list. It should be similar to what you
         // were displaying in ShoppingListsFragment
         super.populateView(view,list);
