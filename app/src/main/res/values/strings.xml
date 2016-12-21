@@ -22,6 +22,7 @@
     <string name="action_share_list">Share List</string>
     <string name="action_sort">Sort</string>
     <string name="action_remove_list">Remove list</string>
+    <string name="action_remove_item">Remove Item</string>
     <string name="action_archive">Archive</string>
 
 

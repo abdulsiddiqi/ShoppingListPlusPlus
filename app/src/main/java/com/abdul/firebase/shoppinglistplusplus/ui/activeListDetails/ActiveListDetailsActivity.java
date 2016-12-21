@@ -10,8 +10,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.abdul.firebase.shoppinglistplusplus.R;
+import com.abdul.firebase.shoppinglistplusplus.model.Item;
 import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
 import com.abdul.firebase.shoppinglistplusplus.ui.BaseActivity;
 import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
@@ -22,24 +24,30 @@ import com.firebase.client.ValueEventListener;
 
 public class ActiveListDetailsActivity extends BaseActivity {
     private static String LOG_TAG = ActiveListDetailsActivity.class.getSimpleName();
-    private String push_id;
-    private Firebase mActiveListRef;
+    private String list_pushID;
     private ListView mListView;
     private ShoppingList mShoppingList;
+    private ActiveListItemsAdapter mItemsListAdapter;
+    private Firebase mActiveListRef;
+    private ValueEventListener mActiveListRefListener;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_active_list_details);
-        //getting the push_id;
+        //getting the list_pushID;
         Intent intent = getIntent();
-        push_id = intent.getStringExtra(Constants.KEY_PUSH_ID);
-        mActiveListRef = new Firebase(Constants.FIREBASE_URL_ACTIVE_LIST).child(push_id);
+        list_pushID = intent.getStringExtra(Constants.KEY_LIST_PUSH_ID);
+        mActiveListRef = new Firebase(Constants.FIREBASE_URL_ACTIVE_LIST).child(list_pushID);
         initializeScreen();
-
+        Firebase listRef = new Firebase(Constants.FIREBASE_URL_SHOPPING_LIST).child(list_pushID);
+        mItemsListAdapter = new ActiveListItemsAdapter(this,
+                Item.class, R.layout.single_active_list_item, listRef, list_pushID);
         /* Calling invalidateOptionsMenu causes onCreateOptionsMenu to be called */
         invalidateOptionsMenu();
 
-        mActiveListRef.addValueEventListener(new ValueEventListener() {
+        //Adding a listener for shopping list name change
+        //in order to update the title
+        mActiveListRefListener = mActiveListRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 ShoppingList sl = dataSnapshot.getValue(ShoppingList.class);
@@ -63,12 +71,19 @@ public class ActiveListDetailsActivity extends BaseActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 //Check if the view isn't an empty footer view
+                Firebase itemRef = mItemsListAdapter.getRef(position);
+                String item_pushID = itemRef.getKey();
+                String oldItemName;
+                TextView itemName = (TextView) view.findViewById(R.id.text_view_active_list_item_name);
+                oldItemName = itemName.getText().toString();
                 if (view.getId() != R.id.list_view_footer_empty) {
-                    showEditListItemNameDialog();
+                    showEditListItemNameDialog(item_pushID,oldItemName);
                 }
                 return true;
             }
         });
+
+        mListView.setAdapter(mItemsListAdapter);
     }
 
     @Override
@@ -130,6 +145,13 @@ public class ActiveListDetailsActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mItemsListAdapter.cleanup();
+        mActiveListRef.removeEventListener(mActiveListRefListener);
+    }
+
     private void initializeScreen() {
         mListView = (ListView) findViewById(R.id.list_view_shopping_list_items);
         Toolbar toolbar = (Toolbar) findViewById(R.id.details_bar);
@@ -164,7 +186,7 @@ public class ActiveListDetailsActivity extends BaseActivity {
     public void removeList() {
         /* Create an instance of the dialog fragment and show it */
         Log.v(LOG_TAG, "removeList");
-        DialogFragment dialog = RemoveListDialogFragment.newInstance(mShoppingList,push_id);
+        DialogFragment dialog = RemoveListDialogFragment.newInstance(mShoppingList, list_pushID);
         dialog.show(getFragmentManager(), "RemoveListDialogFragment");
     }
 
@@ -174,7 +196,7 @@ public class ActiveListDetailsActivity extends BaseActivity {
     public void showAddListItemDialog(View view) {
         /* Create an instance of the dialog fragment and show it */
         Log.v(LOG_TAG, "AddListItem");
-        DialogFragment dialog = AddListItemDialogFragment.newInstance(mShoppingList);
+        DialogFragment dialog = AddListItemDialogFragment.newInstance(mShoppingList, list_pushID);
         dialog.show(getFragmentManager(), "AddListItemDialogFragment");
     }
 
@@ -184,17 +206,17 @@ public class ActiveListDetailsActivity extends BaseActivity {
     public void showEditListNameDialog() {
         /* Create an instance of the dialog fragment and show it */
         Log.v(LOG_TAG, "EditListName");
-        DialogFragment dialog = EditListNameDialogFragment.newInstance(mShoppingList,push_id);
+        DialogFragment dialog = EditListNameDialogFragment.newInstance(mShoppingList, list_pushID);
         dialog.show(this.getFragmentManager(), "EditListNameDialogFragment");
     }
 
     /**
      * Show the edit list item name dialog after longClick on the particular item
      */
-    public void showEditListItemNameDialog() {
+    public void showEditListItemNameDialog(String item_pushID, String oldListName) {
         /* Create an instance of the dialog fragment and show it */
         Log.v(LOG_TAG, "EditListItemName");
-        DialogFragment dialog = EditListItemNameDialogFragment.newInstance(mShoppingList);
+        DialogFragment dialog = EditListItemNameDialogFragment.newInstance(mShoppingList,list_pushID,item_pushID,oldListName);
         dialog.show(this.getFragmentManager(), "EditListItemNameDialogFragment");
     }
 
@@ -204,4 +226,6 @@ public class ActiveListDetailsActivity extends BaseActivity {
     public void toggleShopping(View view) {
 
     }
+
+
 }

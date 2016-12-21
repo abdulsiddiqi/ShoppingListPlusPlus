@@ -25,7 +25,6 @@ import com.firebase.client.Firebase;
 public class ShoppingListsFragment extends Fragment {
     private ListView mListView;
     private ActiveListAdapter mShoppingListAdapter;
-    final Firebase rootref = new Firebase(Constants.FIREBASE_URL_ACTIVE_LIST);
     private static String TAG = ShoppingListsFragment.class.getSimpleName();
     public ShoppingListsFragment() {
         /* Required empty public constructor */
@@ -68,7 +67,7 @@ public class ShoppingListsFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_shopping_lists, container, false);
         initializeScreen(rootView);
         mShoppingListAdapter = new ActiveListAdapter(getActivity(),
-                ShoppingList.class, R.layout.single_active_list, rootref);
+                ShoppingList.class, R.layout.single_active_list, new Firebase(Constants.FIREBASE_URL_ACTIVE_LIST));
         mListView.setAdapter(mShoppingListAdapter);
 
         /**
@@ -79,7 +78,8 @@ public class ShoppingListsFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(getActivity(), ActiveListDetailsActivity.class);
                 Firebase firebase = mShoppingListAdapter.getRef(position);
-                intent.putExtra(Constants.KEY_PUSH_ID,firebase.getKey());
+                //passing list key
+                intent.putExtra(Constants.KEY_LIST_PUSH_ID,firebase.getKey());
                 startActivity(intent);
             }
         });

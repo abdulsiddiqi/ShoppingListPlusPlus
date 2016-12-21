@@ -28,7 +28,7 @@ public class EditListNameDialogFragment extends EditListDialogFragment {
         EditListNameDialogFragment editListNameDialogFragment = new EditListNameDialogFragment();
         Bundle bundle = EditListDialogFragment.newInstanceHelper(shoppingList, R.layout.dialog_edit_list);
         bundle.putString(Constants.KEY_LIST_NAME,shoppingList.getListName());
-        bundle.putString(Constants.KEY_PUSH_ID,push_id);
+        bundle.putString(Constants.KEY_LIST_PUSH_ID,push_id);
         bundle.putLong(Constants.KEY_TIMESTAMP_CREATED,shoppingList.getTimeStampCreated());
         editListNameDialogFragment.setArguments(bundle);
         Log.v(LOG_TAG, "newInstance");
@@ -55,7 +55,7 @@ public class EditListNameDialogFragment extends EditListDialogFragment {
         Bundle bundle = getArguments();
         if (bundle != null) {
             old_title = bundle.getString(Constants.KEY_LIST_NAME);
-            push_id = bundle.getString(Constants.KEY_PUSH_ID);
+            push_id = bundle.getString(Constants.KEY_LIST_PUSH_ID);
             timestampCreated = bundle.getLong(Constants.KEY_TIMESTAMP_CREATED);
             helpSetDefaultValueEditText(old_title);
         }
@@ -66,6 +66,7 @@ public class EditListNameDialogFragment extends EditListDialogFragment {
     /**
      * Changes the list name in all copies of the current list
      */
+    @Override
     protected void doListEdit() {
 
         String newListName = mEditTextForList.getText().toString();
