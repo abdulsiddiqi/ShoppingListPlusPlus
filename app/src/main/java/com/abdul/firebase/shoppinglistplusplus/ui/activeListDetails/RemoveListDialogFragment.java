@@ -11,8 +11,9 @@ import android.util.Log;
 import com.abdul.firebase.shoppinglistplusplus.R;
 import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
 import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.HashMap;
 
@@ -73,15 +74,15 @@ public class RemoveListDialogFragment extends DialogFragment {
 //        listRef.removeValue();
 //        Firebase itemsRef = new Firebase(Constants.FIREBASE_URL_SHOPPING_LIST).child(push_id);
 //        itemsRef.removeValue();
-        Firebase ref = new Firebase(Constants.FIREBASE_URL);
+        DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference();
         HashMap<String,Object> updatedShoppingList = new HashMap<>();
         updatedShoppingList.put(Constants.FIREBASE_LOCATION_ACTIVE_LIST + "/" + push_id,null);
         updatedShoppingList.put(Constants.FIREBASE_LOCATION_SHOPPING_LIST+ "/" + push_id,null);
-        ref.updateChildren(updatedShoppingList, new Firebase.CompletionListener() {
+        rootRef.updateChildren(updatedShoppingList, new DatabaseReference.CompletionListener() {
             @Override
-            public void onComplete(FirebaseError firebaseError, Firebase firebase) {
-                if (firebaseError != null) {
-                    Log.e(LOG_TAG,"Error updating data: " + firebaseError.getMessage());
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                if (databaseError != null) {
+                    Log.e(LOG_TAG,"Error updating data: " + databaseError.getMessage());
                 }
             }
         });

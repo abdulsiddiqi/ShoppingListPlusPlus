@@ -7,10 +7,12 @@ import android.util.Log;
 import com.abdul.firebase.shoppinglistplusplus.R;
 import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
 import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
-import com.firebase.client.Firebase;
-import com.firebase.client.ServerValue;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 
 import java.util.HashMap;
+
 
 /**
  * Lets user edit the list name for all copies of the current list
@@ -71,7 +73,9 @@ public class EditListNameDialogFragment extends EditListDialogFragment {
 
         String newListName = mEditTextForList.getText().toString();
         if (newListName.length() > 0 &&!newListName.equals(old_title)) {
-            Firebase ref = new Firebase(Constants.FIREBASE_URL_ACTIVE_LIST).child(push_id);
+            DatabaseReference listRef = FirebaseDatabase.getInstance().getReference()
+                    .child(Constants.FIREBASE_LOCATION_ACTIVE_LIST)
+                    .child(push_id);
             //hashmap containing all the updated data
             HashMap<String,Object> shoppingListUpdatedProperties = new HashMap<>();
             shoppingListUpdatedProperties.put("listName", newListName);
@@ -82,7 +86,7 @@ public class EditListNameDialogFragment extends EditListDialogFragment {
             dateCreatedObj.put("timestamp",timestampCreated);
             shoppingListUpdatedProperties.put("timestampLastChanged",dateLastChangedObj);
             shoppingListUpdatedProperties.put("timestampCreated", dateCreatedObj);
-            ref.updateChildren(shoppingListUpdatedProperties);
+            listRef.updateChildren(shoppingListUpdatedProperties);
         }
     }
 }

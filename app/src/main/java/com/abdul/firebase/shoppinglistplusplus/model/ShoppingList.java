@@ -1,7 +1,7 @@
 package com.abdul.firebase.shoppinglistplusplus.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.firebase.client.ServerValue;
+import com.google.firebase.database.Exclude;
+import com.google.firebase.database.ServerValue;
 
 import java.util.HashMap;
 
@@ -37,12 +37,12 @@ public class ShoppingList {
 
     public HashMap<String,Object> getTimestampCreated() { return timestampCreated;}
 
-    @JsonIgnore
+    @Exclude
     public long getTimeStampLastChanged() {
         return (long) timestampLastChanged.get("timestamp");
     }
 
-    @JsonIgnore
+    @Exclude
     public long getTimeStampCreated() {
         return (long) timestampCreated.get("timestamp");
     }

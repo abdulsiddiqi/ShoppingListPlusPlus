@@ -8,11 +8,9 @@ import android.support.v7.app.AlertDialog;
 
 import com.abdul.firebase.shoppinglistplusplus.R;
 import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
-import com.firebase.client.Firebase;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
-/**
- * Created by abdul on 12/21/2016.
- */
 public class RemoveListItemDialogFragment extends DialogFragment {
     final static String LOG_TAG = RemoveListDialogFragment.class.getSimpleName();
     private String list_pushID, item_pushID;
@@ -57,7 +55,10 @@ public class RemoveListItemDialogFragment extends DialogFragment {
         return builder.create();
     }
     private void removeListItem() {
-        Firebase itemRef = new Firebase(Constants.FIREBASE_URL_SHOPPING_LIST).child(list_pushID).child(item_pushID);
+        DatabaseReference itemRef = FirebaseDatabase.getInstance().getReference()
+                .child(Constants.FIREBASE_LOCATION_SHOPPING_LIST)
+                .child(list_pushID)
+                .child(item_pushID);
         itemRef.removeValue();
     }
 }

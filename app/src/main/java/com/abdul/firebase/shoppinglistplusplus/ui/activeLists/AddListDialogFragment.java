@@ -5,6 +5,7 @@ import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,17 +14,18 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
-import com.firebase.client.Firebase;
 import com.abdul.firebase.shoppinglistplusplus.R;
+import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
 import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * Adds a new shopping list
  */
 public class AddListDialogFragment extends DialogFragment {
     EditText mEditTextListName;
-
+    private static final String LOG_TAG = AddListDialogFragment.class.getSimpleName();
     /**
      * Public static constructor that creates fragment and
      * passes a bundle with data into it when adapter is created
@@ -92,10 +94,12 @@ public class AddListDialogFragment extends DialogFragment {
      * Add new active list
      */
     public void addShoppingList() {
-        Firebase roofref = new Firebase(Constants.FIREBASE_URL).child(Constants.FIREBASE_LOCATION_ACTIVE_LIST).push();
         String userEnteredName = mEditTextListName.getText().toString();
         ShoppingList sl = new ShoppingList(userEnteredName,"Anonymous");
-        roofref.setValue(sl);
+        DatabaseReference listRef = FirebaseDatabase.getInstance().getReference()
+                .child(Constants.FIREBASE_LOCATION_ACTIVE_LIST);
+        listRef.push().setValue(sl);
+        Log.d(LOG_TAG,"addShoppingList");
     }
 
 }

@@ -1,14 +1,20 @@
 package com.abdul.firebase.shoppinglistplusplus.ui.activeListDetails;
 
+import android.app.Activity;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -17,19 +23,27 @@ import com.abdul.firebase.shoppinglistplusplus.model.Item;
 import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
 import com.abdul.firebase.shoppinglistplusplus.ui.BaseActivity;
 import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ActiveListDetailsActivity extends BaseActivity {
     private static String LOG_TAG = ActiveListDetailsActivity.class.getSimpleName();
     private String list_pushID;
-    private ListView mListView;
+    private ListView mListItemsView;
+    private List<Item> mItems;
+    private List<String> mItemsIds;
     private ShoppingList mShoppingList;
     private ActiveListItemsAdapter mItemsListAdapter;
-    private Firebase mActiveListRef;
-    private ValueEventListener mActiveListRefListener;
+    // Firebase instance variables
+    private DatabaseReference mShoppingListDatabaseReference;
+    private ChildEventListener mChildEventListener;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,22 +51,40 @@ public class ActiveListDetailsActivity extends BaseActivity {
         //getting the list_pushID;
         Intent intent = getIntent();
         list_pushID = intent.getStringExtra(Constants.KEY_LIST_PUSH_ID);
-        mActiveListRef = new Firebase(Constants.FIREBASE_URL_ACTIVE_LIST).child(list_pushID);
+        mItems = new ArrayList<>();
+        mItemsIds = new ArrayList<>();
         initializeScreen();
-        Firebase listRef = new Firebase(Constants.FIREBASE_URL_SHOPPING_LIST).child(list_pushID);
+
+        //Setting up references to items database, adapters and listview
+        FirebaseDatabase rootRef = FirebaseDatabase.getInstance();
+        mShoppingListDatabaseReference = rootRef.getReference()
+                .child(Constants.FIREBASE_LOCATION_SHOPPING_LIST)
+                .child(list_pushID);
         mItemsListAdapter = new ActiveListItemsAdapter(this,
-                Item.class, R.layout.single_active_list_item, listRef, list_pushID);
+                R.layout.fragment_shopping_lists, mItems, list_pushID, ActiveListDetailsActivity.this);
+
+        mListItemsView.setAdapter(mItemsListAdapter);
+        mListItemsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.d(LOG_TAG, "onItemClick");
+                TextView itemView = (TextView) view.findViewById(R.id.text_view_active_list_item_name);
+                showEditListItemNameDialog(mItemsIds.get(position), itemView.getText().toString());
+            }
+        });
         /* Calling invalidateOptionsMenu causes onCreateOptionsMenu to be called */
         invalidateOptionsMenu();
-
-        //Adding a listener for shopping list name change
-        //in order to update the title
-        mActiveListRefListener = mActiveListRef.addValueEventListener(new ValueEventListener() {
+        DatabaseReference mListTitleRef = rootRef.getReference()
+                .child(Constants.FIREBASE_LOCATION_ACTIVE_LIST)
+                .child(list_pushID);
+        //Setting listener for changes in title
+        mListTitleRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 ShoppingList sl = dataSnapshot.getValue(ShoppingList.class);
                 if (sl != null) {
                     mShoppingList = sl;
+                    Log.d(LOG_TAG, "listName: " + sl.getListName());
                     setTitle(sl.getListName());
                 }
                 else {
@@ -61,29 +93,62 @@ public class ActiveListDetailsActivity extends BaseActivity {
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
                 Log.e(LOG_TAG, getString(R.string.log_error_the_read_failed) +
-                               firebaseError.getMessage());
+                        databaseError.getMessage());
             }
         });
 
-        mListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+        mChildEventListener = new ChildEventListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                //Check if the view isn't an empty footer view
-                Firebase itemRef = mItemsListAdapter.getRef(position);
-                String item_pushID = itemRef.getKey();
-                String oldItemName;
-                TextView itemName = (TextView) view.findViewById(R.id.text_view_active_list_item_name);
-                oldItemName = itemName.getText().toString();
-                if (view.getId() != R.id.list_view_footer_empty) {
-                    showEditListItemNameDialog(item_pushID,oldItemName);
+            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+                Log.d(LOG_TAG, "onChildAdded");
+                int index = 0;
+                if (previousChildName != null) {
+                    index = mItemsIds.indexOf(previousChildName) + 1;
                 }
-                return true;
+                mItemsIds.add(index, dataSnapshot.getKey());
+                mItems.add(index, dataSnapshot.getValue(Item.class));
+                mItemsListAdapter.notifyDataSetChanged();
             }
-        });
 
-        mListView.setAdapter(mItemsListAdapter);
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
+                Log.d(LOG_TAG, "onChildChanged");
+                int index = 0;
+                if (previousChildName != null) {
+                    index = mItemsIds.indexOf(previousChildName) + 1;
+                }
+                mItems.set(index,dataSnapshot.getValue(Item.class));
+                mItemsListAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                Log.d(LOG_TAG, "onChildRemoved");
+                int index = mItemsIds.indexOf(dataSnapshot.getKey());
+                mItemsIds.remove(index);
+                mItems.remove(index);
+                mItemsListAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
+                Log.d(LOG_TAG, "onChildMoved");
+                int oldIndex = mItemsIds.indexOf(dataSnapshot.getKey());
+                mItemsIds.remove(oldIndex);
+                mItems.remove(oldIndex);
+                mItemsIds.add(dataSnapshot.getKey());
+                mItems.add(dataSnapshot.getValue(Item.class));
+                mItemsListAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d(LOG_TAG, "onCancelled");
+            }
+        };
+        mShoppingListDatabaseReference.addChildEventListener(mChildEventListener);
     }
 
     @Override
@@ -148,12 +213,12 @@ public class ActiveListDetailsActivity extends BaseActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mItemsListAdapter.cleanup();
-        mActiveListRef.removeEventListener(mActiveListRefListener);
+        //mItemsListAdapter.cleanup();
+        //mActiveListRef.removeEventListener(mActiveListRefListener);
     }
 
     private void initializeScreen() {
-        mListView = (ListView) findViewById(R.id.list_view_shopping_list_items);
+        mListItemsView = (ListView) findViewById(R.id.list_view_shopping_list_items);
         Toolbar toolbar = (Toolbar) findViewById(R.id.details_bar);
         setSupportActionBar(toolbar);
         /* Adding back button to the action bar*/
@@ -161,8 +226,7 @@ public class ActiveListDetailsActivity extends BaseActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
         View footer = getLayoutInflater().inflate(R.layout.footer_empty,null);
-        mListView.addFooterView(footer);
-
+        mListItemsView.addFooterView(footer);
     }
     /**
      * Archive current list when user selects "Archive" menu item
@@ -227,5 +291,35 @@ public class ActiveListDetailsActivity extends BaseActivity {
 
     }
 
+    public class ActiveListItemsAdapter extends ArrayAdapter<Item> {
+        private final String LOG_TAG = ActiveListItemsAdapter.class.getSimpleName();
+        private String list_pushID;
+        private Activity mActivity;
+        public ActiveListItemsAdapter(Context context, int resource, List<Item> objects, String list_pushID, Activity activity) {
+            super(context,resource,objects);
+            mActivity = activity;
+            this.list_pushID = list_pushID;
+        }
 
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.single_active_list_item,parent,false);
+            }
+            Item item = getItem(position);
+            TextView itemName = (TextView) convertView.findViewById(R.id.text_view_active_list_item_name);
+            final ImageView deleteItem = (ImageView) convertView.findViewById(R.id.button_remove_item);
+            final String item_pushID = mItemsIds.get(position);
+            deleteItem.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    DialogFragment dialog = RemoveListItemDialogFragment.newInstance(list_pushID, item_pushID);
+                    dialog.show(mActivity.getFragmentManager(), "RemoveListItemDialogFragment");
+                }
+            });
+            itemName.setText(item.getItemName());
+            return convertView;
+        }
+    }
 }

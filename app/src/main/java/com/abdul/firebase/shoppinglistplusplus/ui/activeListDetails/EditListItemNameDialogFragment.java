@@ -7,7 +7,8 @@ import android.util.Log;
 import com.abdul.firebase.shoppinglistplusplus.R;
 import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
 import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
-import com.firebase.client.Firebase;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.HashMap;
 
@@ -67,9 +68,11 @@ public class EditListItemNameDialogFragment extends EditListDialogFragment {
      */
     protected void doListEdit() {
         String newItemName = mEditTextForList.getText().toString();
-        Firebase rootRef = new Firebase(Constants.FIREBASE_URL_SHOPPING_LIST);
-        Firebase listRef = rootRef.child(list_pushID);
-        Firebase itemRef = listRef.child(item_pushID);
+        DatabaseReference itemRef = FirebaseDatabase.getInstance().getReference()
+                .child(Constants.FIREBASE_LOCATION_SHOPPING_LIST)
+                .child(list_pushID)
+                .child(item_pushID);
+
         if (newItemName.length() > 0 && !newItemName.equals(old_itemName)) {
             //hashmap containg all the updated data
             HashMap<String,Object> itemUpdatedProperties = new HashMap<>();

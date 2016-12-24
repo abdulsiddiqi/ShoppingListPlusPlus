@@ -9,7 +9,8 @@ import com.abdul.firebase.shoppinglistplusplus.R;
 import com.abdul.firebase.shoppinglistplusplus.model.Item;
 import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
 import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
-import com.firebase.client.Firebase;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 /**
  *
@@ -58,9 +59,10 @@ public class AddListItemDialogFragment extends EditListDialogFragment {
         Log.d(LOG_TAG, "doListEdit");
         String itemName = mEditTextForList.getText().toString();
         if (itemName.length() > 0) {
-            Firebase shoppingRoofRef = new Firebase(Constants.FIREBASE_URL_SHOPPING_LIST).child(push_id);
-            Firebase itemRef = shoppingRoofRef.push();
-            Item item = new Item(itemName,"Anonymous Owner");
+            DatabaseReference itemRef = FirebaseDatabase.getInstance().getReference()
+                    .child(Constants.FIREBASE_LOCATION_SHOPPING_LIST)
+                    .child(push_id).push();
+            Item item = new Item(itemName,"Anonymous");
             itemRef.setValue(item);
         }
     }
