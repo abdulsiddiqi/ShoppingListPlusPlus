@@ -15,6 +15,8 @@ import com.abdul.firebase.shoppinglistplusplus.R;
 import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
 import com.abdul.firebase.shoppinglistplusplus.ui.activeListDetails.ActiveListDetailsActivity;
 import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -42,7 +44,7 @@ public class ShoppingListsFragment extends Fragment {
     private FirebaseDatabase mFirebaseDatabase;
     private DatabaseReference mShoppingListDatabaseReference;
     private ChildEventListener mChildEventListener;
-
+    private FirebaseAuth mAuth;
     public ShoppingListsFragment() {
         /* Required empty public constructor */
     }
@@ -71,9 +73,12 @@ public class ShoppingListsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
+
         }
-
-
+        mAuth = FirebaseAuth.getInstance();
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null)
+            Log.d(LOG_TAG,"User is anonymous: " + Boolean.toString(user.isAnonymous()));
     }
 
     @Override
@@ -153,7 +158,7 @@ public class ShoppingListsFragment extends Fragment {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Log.d(LOG_TAG, "onCancelled");
+                Log.d(LOG_TAG, "onCancelled with details: " + databaseError.getMessage());
             }
         };
         mShoppingListDatabaseReference.addChildEventListener(mChildEventListener);

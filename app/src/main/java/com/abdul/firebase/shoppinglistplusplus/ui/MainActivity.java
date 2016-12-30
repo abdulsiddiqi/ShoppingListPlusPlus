@@ -1,6 +1,9 @@
 package com.abdul.firebase.shoppinglistplusplus.ui;
 
 import android.app.DialogFragment;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -8,15 +11,24 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
 import com.abdul.firebase.shoppinglistplusplus.R;
+import com.abdul.firebase.shoppinglistplusplus.model.User;
 import com.abdul.firebase.shoppinglistplusplus.ui.activeLists.AddListDialogFragment;
 import com.abdul.firebase.shoppinglistplusplus.ui.activeLists.ShoppingListsFragment;
+import com.abdul.firebase.shoppinglistplusplus.ui.login.LoginActivity;
 import com.abdul.firebase.shoppinglistplusplus.ui.meals.AddMealDialogFragment;
 import com.abdul.firebase.shoppinglistplusplus.ui.meals.MealsFragment;
+import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * Represents the home screen of the app which
@@ -24,12 +36,10 @@ import com.abdul.firebase.shoppinglistplusplus.ui.meals.MealsFragment;
  */
 public class MainActivity extends BaseActivity {
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         /**
          * Link layout elements from XML and setup the toolbar
          */
@@ -57,6 +67,19 @@ public class MainActivity extends BaseActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+        if (id == R.id.action_logout) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            SharedPreferences sp = getSharedPreferences(getPackageName(),Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.remove(getString(R.string.pref_email))
+                    .remove(getString(R.string.pref_firebase_key))
+                    .remove(getString(R.string.pref_provider))
+                    .remove(getString(R.string.pref_user_name));
+            editor.apply();
+            startActivity(intent);
+            finish();
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -84,6 +107,37 @@ public class MainActivity extends BaseActivity {
          * Setup the mTabLayout with view pager
          */
         tabLayout.setupWithViewPager(viewPager);
+        final SharedPreferences sp = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
+        String provider = sp.getString(getString(R.string.pref_provider),"Google");
+        if (provider.equals("Google")) {
+            String key = sp.getString(getString(R.string.pref_firebase_key),"");
+            DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference()
+                    .child(Constants.FIREBASE_LOCATION_USERS)
+                    .child(key);
+            //trying to retrieve user data for Google method
+            usersRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    User user = dataSnapshot.getValue(User.class);
+                    String firstName = user.getName();
+                    SharedPreferences.Editor editor = sp.edit();
+                    editor.putString(getString(R.string.pref_email),user.getEmail());
+                    editor.apply();
+                    firstName = firstName.split(" ")[0];
+                    setTitle(firstName + "'s Lists");
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.v(LOG_TAG,"Error retrieving user info for Google method with error " + databaseError);
+                }
+            });
+
+        }
+        else {
+            String displayName = sp.getString(getString(R.string.pref_user_name),"");
+            setTitle(displayName.split(" ")[0] + "'s Lists");
+        }
     }
 
     /**

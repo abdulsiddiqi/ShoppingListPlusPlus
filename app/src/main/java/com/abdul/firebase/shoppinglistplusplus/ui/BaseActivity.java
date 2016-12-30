@@ -29,9 +29,9 @@ public abstract class BaseActivity extends AppCompatActivity implements
 
         /* Setup the Google API object to allow Google logins */
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken("134388935339-nahpm55qoobp3dofifffh3bu52ju72s5.apps.googleusercontent.com")
                 .requestEmail()
                 .build();
-
         /**
          * Build a GoogleApiClient with access to the Google Sign-In API and the
          * options specified by gso.

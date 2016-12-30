@@ -2,8 +2,8 @@
     <!--
 
     == Base Strings For the App ==
-
      -->
+
     <string name="app_name">ShoppingList++</string>
     <string name="pager_title_shopping_lists">Shopping Lists</string>
     <string name="pager_title_meals">Meals</string>
@@ -197,6 +197,10 @@
 
     <!-- Preference Name -->
     <string name="pref_name_sort_order_lists">pref_sort_order_lists</string>
+    <string name="pref_firebase_key">firebase_key</string>
+    <string name="pref_provider">current_provider</string>
+    <string name="pref_user_name">user_name</string>
+    <string name="pref_email">user_email</string>
 
     <!-- Ordering Choices Labels : Lists -->
     <string name="pref_sort_list_label_sortType">Order by</string>

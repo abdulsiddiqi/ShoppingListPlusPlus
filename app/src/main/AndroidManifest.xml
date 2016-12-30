@@ -2,12 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.abdul.firebase.shoppinglistplusplus">
 
+
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:name=".ShoppingListApplication"
         android:icon="@mipmap/ic_shopping_list"
-        android:label="@string/app_name"
         android:allowBackup="true"
+        android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <activity
             android:name=".ui.MainActivity"
@@ -16,10 +17,6 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.abdul.firebase.shoppinglistplusplus.ui.MainActivity" />
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
         <activity
@@ -32,18 +29,22 @@
                 android:value=".ui.MainActivity" />
         </activity>
 
-        <!--<activity android:name=".ui.login.LoginActivity">-->
 
-        <!--</activity>-->
+        <activity android:name=".ui.login.LoginActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
-        <!--<activity-->
-            <!--android:name=".ui.login.CreateAccountActivity"-->
-            <!--android:label="@string/title_activity_create_account"-->
-            <!--android:parentActivityName=".ui.login.LoginActivity">-->
-            <!--<meta-data-->
-                <!--android:name="android.support.PARENT_ACTIVITY"-->
-                <!--android:value=".ui.login.LoginActivity" />-->
-        <!--</activity>-->
+        <activity
+            android:name=".ui.login.CreateAccountActivity"
+            android:label="@string/title_activity_create_account"
+            android:parentActivityName=".ui.login.LoginActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.login.LoginActivity" />
+        </activity>
     </application>
 
 </manifest>

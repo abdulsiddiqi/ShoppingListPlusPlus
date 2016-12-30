@@ -70,10 +70,6 @@ public class RemoveListDialogFragment extends DialogFragment {
     }
 
     private void removeList() {
-//        Firebase listRef = new Firebase(Constants.FIREBASE_URL_ACTIVE_LIST).child(push_id);
-//        listRef.removeValue();
-//        Firebase itemsRef = new Firebase(Constants.FIREBASE_URL_SHOPPING_LIST).child(push_id);
-//        itemsRef.removeValue();
         DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference();
         HashMap<String,Object> updatedShoppingList = new HashMap<>();
         updatedShoppingList.put(Constants.FIREBASE_LOCATION_ACTIVE_LIST + "/" + push_id,null);

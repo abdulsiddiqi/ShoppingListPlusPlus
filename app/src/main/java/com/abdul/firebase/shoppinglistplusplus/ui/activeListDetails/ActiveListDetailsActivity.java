@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -165,8 +166,18 @@ public class ActiveListDetailsActivity extends BaseActivity {
         MenuItem archive = menu.findItem(R.id.action_archive);
 
         /* Only the edit and remove options are implemented */
-        remove.setVisible(true);
-        edit.setVisible(true);
+        String shoppingListOwner = mShoppingList.getOwner();
+        String loggedInUser;
+        SharedPreferences sp = getSharedPreferences(getPackageName(),Context.MODE_PRIVATE);
+        loggedInUser = sp.getString(getString(R.string.pref_email),"");
+        if (shoppingListOwner.equals(loggedInUser)) {
+            remove.setVisible(true);
+            edit.setVisible(true);
+        }
+        else {
+            remove.setVisible(false);
+            edit.setVisible(false);
+        }
         share.setVisible(false);
         archive.setVisible(false);
         return true;

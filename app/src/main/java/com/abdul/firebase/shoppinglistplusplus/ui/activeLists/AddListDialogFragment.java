@@ -2,7 +2,9 @@ package com.abdul.firebase.shoppinglistplusplus.ui.activeLists;
 
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
@@ -95,7 +97,10 @@ public class AddListDialogFragment extends DialogFragment {
      */
     public void addShoppingList() {
         String userEnteredName = mEditTextListName.getText().toString();
-        ShoppingList sl = new ShoppingList(userEnteredName,"Anonymous");
+        String owner;
+        SharedPreferences sp = getActivity().getSharedPreferences(getActivity().getPackageName(), Context.MODE_PRIVATE);
+        owner = sp.getString(getString(R.string.pref_email),"");
+        ShoppingList sl = new ShoppingList(userEnteredName,owner);
         DatabaseReference listRef = FirebaseDatabase.getInstance().getReference()
                 .child(Constants.FIREBASE_LOCATION_ACTIVE_LIST);
         listRef.push().setValue(sl);
