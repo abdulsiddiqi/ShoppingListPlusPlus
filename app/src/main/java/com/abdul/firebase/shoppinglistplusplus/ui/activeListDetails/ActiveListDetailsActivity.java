@@ -5,6 +5,7 @@ import android.app.DialogFragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -22,6 +23,7 @@ import android.widget.TextView;
 import com.abdul.firebase.shoppinglistplusplus.R;
 import com.abdul.firebase.shoppinglistplusplus.model.Item;
 import com.abdul.firebase.shoppinglistplusplus.model.ShoppingList;
+import com.abdul.firebase.shoppinglistplusplus.model.User;
 import com.abdul.firebase.shoppinglistplusplus.ui.BaseActivity;
 import com.abdul.firebase.shoppinglistplusplus.utils.Constants;
 import com.google.firebase.database.ChildEventListener;
@@ -37,6 +39,7 @@ import java.util.List;
 public class ActiveListDetailsActivity extends BaseActivity {
     private static String LOG_TAG = ActiveListDetailsActivity.class.getSimpleName();
     private String list_pushID;
+    private String username;
     private ListView mListItemsView;
     private List<Item> mItems;
     private List<String> mItemsIds;
@@ -65,14 +68,43 @@ public class ActiveListDetailsActivity extends BaseActivity {
                 R.layout.fragment_shopping_lists, mItems, list_pushID, ActiveListDetailsActivity.this);
 
         mListItemsView.setAdapter(mItemsListAdapter);
+        mListItemsView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                TextView itemView = (TextView) view.findViewById(R.id.text_view_active_list_item_name);
+                showEditListItemNameDialog(mItemsIds.get(position), itemView.getText().toString());
+                return true;
+            }
+        });
         mListItemsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(LOG_TAG, "onItemClick");
-                TextView itemView = (TextView) view.findViewById(R.id.text_view_active_list_item_name);
-                showEditListItemNameDialog(mItemsIds.get(position), itemView.getText().toString());
+                String item_pushId = mItemsIds.get(position);
+                DatabaseReference itemRef = FirebaseDatabase.getInstance().getReference()
+                        .child(Constants.FIREBASE_LOCATION_SHOPPING_LIST)
+                        .child(list_pushID)
+                        .child(item_pushId);
+                Item item = mItems.get(position);
+                String boughtBy = item.getBoughtBy();
+                //nobody has bought the item
+                if (boughtBy.length() == 0) {
+                    item.setBoughtBy(username);
+                    item.setHasBought(true);
+                }
+                //only YOU can unbuy an item if it has been bought
+                else if (item.getHasBought() && boughtBy.equals(username)){
+                    item.setBoughtBy("");
+                    item.setHasBought(false);
+                }
+                //no need to notify and manipulate arraylist if no modification
+                else {
+                    return;
+                }
+                itemRef.setValue(item);
             }
         });
+
         /* Calling invalidateOptionsMenu causes onCreateOptionsMenu to be called */
         invalidateOptionsMenu();
         DatabaseReference mListTitleRef = rootRef.getReference()
@@ -99,7 +131,30 @@ public class ActiveListDetailsActivity extends BaseActivity {
                         databaseError.getMessage());
             }
         });
+        //getting username and storing in sharedpreferences
+        SharedPreferences sp = getSharedPreferences(getPackageName(),Context.MODE_PRIVATE);
+        String encoded_email = sp.getString(getString(R.string.pref_firebase_key),null);
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference()
+                .child(Constants.FIREBASE_LOCATION_USERS)
+                .child(encoded_email);
+        userRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    User user = dataSnapshot.getValue(User.class);
+                    username = user.getName();
+                }
+                else {
+                    Log.e(LOG_TAG, "username doesn't exist");
+                }
+            }
 
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(LOG_TAG, "OnCancelled: " + databaseError.getMessage());
+            }
+        });
+        //Setting up child listener for each item
         mChildEventListener = new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
@@ -302,6 +357,9 @@ public class ActiveListDetailsActivity extends BaseActivity {
 
     }
 
+    private void changeItem(String boughtBy) {
+
+    }
     public class ActiveListItemsAdapter extends ArrayAdapter<Item> {
         private final String LOG_TAG = ActiveListItemsAdapter.class.getSimpleName();
         private String list_pushID;
@@ -320,8 +378,14 @@ public class ActiveListDetailsActivity extends BaseActivity {
             }
             Item item = getItem(position);
             TextView itemName = (TextView) convertView.findViewById(R.id.text_view_active_list_item_name);
+            TextView boughtByLabel = (TextView) convertView.findViewById(R.id.text_view_bought_by);
+            TextView boughtByUser = (TextView) convertView.findViewById(R.id.text_view_bought_by_user);
             final ImageView deleteItem = (ImageView) convertView.findViewById(R.id.button_remove_item);
             final String item_pushID = mItemsIds.get(position);
+            //Initially only delete button is shown
+            deleteItem.setVisibility(View.VISIBLE);
+            boughtByLabel.setVisibility(View.INVISIBLE);
+            boughtByUser.setVisibility(View.INVISIBLE);
             deleteItem.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -329,6 +393,19 @@ public class ActiveListDetailsActivity extends BaseActivity {
                     dialog.show(mActivity.getFragmentManager(), "RemoveListItemDialogFragment");
                 }
             });
+            if (item.getHasBought()) {
+                deleteItem.setVisibility(View.INVISIBLE);
+                boughtByLabel.setVisibility(View.VISIBLE);
+                boughtByUser.setVisibility(View.VISIBLE);
+                if (item.getBoughtBy().equals(username))
+                    boughtByUser.setText(getString(R.string.text_you));
+                else
+                    boughtByUser.setText(item.getBoughtBy());
+                itemName.setPaintFlags(itemName.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            }
+            else {
+                itemName.setPaintFlags(itemName.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+            }
             itemName.setText(item.getItemName());
             return convertView;
         }

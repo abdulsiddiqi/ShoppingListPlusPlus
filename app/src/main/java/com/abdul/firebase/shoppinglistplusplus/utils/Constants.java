@@ -32,6 +32,7 @@ public final class Constants {
     public static final String KEY_TIMESTAMP_CREATED = "TIMESTAMP_CREATED";
     public static final String KEY_ITEM_NAME = "ITEM_NAME";
     public static final String FIREBASE_PROPERTY_TIMESTAMP_LAST_CHANGED = "dateLastChanged";
+    public static final Integer FINISH_VERIFICATION = 1;
 
     /**
      * Constants for bundles, extras and shared preferences keys

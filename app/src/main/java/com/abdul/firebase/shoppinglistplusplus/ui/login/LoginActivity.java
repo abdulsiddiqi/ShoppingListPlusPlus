@@ -111,6 +111,7 @@ public class LoginActivity extends BaseActivity {
     @Override
     public void onStart() {
         super.onStart();
+        Log.d(LOG_TAG, "onStart");
         mAuth.addAuthStateListener(mAuthListener);
     }
 
@@ -125,6 +126,7 @@ public class LoginActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(LOG_TAG, "onResume");
     }
 
     @Override
@@ -163,6 +165,11 @@ public class LoginActivity extends BaseActivity {
      */
     public void initializeScreen() {
         mEditTextEmailInput = (EditText) findViewById(R.id.edit_text_email);
+        Intent intent = getIntent();
+        if (intent != null) {
+            String email = intent.getStringExtra(getString(R.string.pref_email));
+            mEditTextEmailInput.setText(email);
+        }
         mEditTextPasswordInput = (EditText) findViewById(R.id.edit_text_password);
         LinearLayout linearLayoutLoginActivity = (LinearLayout) findViewById(R.id.linear_layout_login_activity);
         initializeBackground(linearLayoutLoginActivity);
@@ -187,7 +194,7 @@ public class LoginActivity extends BaseActivity {
         if (password.length() < 1) {
             mEditTextPasswordInput.setError("password is empty");
         }
-
+        mAuthProgressDialog.show();
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -201,15 +208,15 @@ public class LoginActivity extends BaseActivity {
                             Log.w(LOG_TAG, "signInWithEmail:failed", task.getException());
                             Toast.makeText(LoginActivity.this, "Authentication failed: " + task.getException().getMessage(),
                                     Toast.LENGTH_SHORT).show();
-
+                            mAuthProgressDialog.dismiss();
                             return;
                         }
                         setAuthenticatedUserPasswordProvider(task.getResult());
+                        mAuthProgressDialog.dismiss();
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
                         finish();
-                        // ...
                     }
                 });
     }
@@ -224,9 +231,9 @@ public class LoginActivity extends BaseActivity {
         Context context = getApplicationContext();
         SharedPreferences sp = context.getSharedPreferences(context.getPackageName(),Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
-        editor.putString(getString(R.string.pref_user_name),authData.getUser().getDisplayName());
-        editor.putString(getString(R.string.pref_email),email);
-        //editor.putString(getString(R.string.pref_provider),"Email");
+        Log.d(LOG_TAG, "user_name for email/password: " + authData.getUser().getDisplayName());
+        editor.putString(getString(R.string.pref_firebase_key),email.replace(".",","));
+        editor.putString(getString(R.string.pref_provider),"Email");
         editor.apply();
     }
 
@@ -301,7 +308,7 @@ public class LoginActivity extends BaseActivity {
      * @param token A Google OAuth access token returned from Google
      */
     private void loginWithGoogle(String token) {
-        Log.d(LOG_TAG, "token " + token);
+        //Log.d(LOG_TAG, "token " + token);
         AuthCredential credential = GoogleAuthProvider.getCredential(token, null);
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
