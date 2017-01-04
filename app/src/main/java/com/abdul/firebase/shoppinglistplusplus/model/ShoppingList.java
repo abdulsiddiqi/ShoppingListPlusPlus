@@ -3,6 +3,7 @@ package com.abdul.firebase.shoppinglistplusplus.model;
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.ServerValue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -13,7 +14,9 @@ public class ShoppingList {
     private String owner;
     private HashMap<String,Object> timestampLastChanged;
     private HashMap<String,Object> timestampCreated;
+    private ArrayList<String> shoppers = new ArrayList<>();
     public ShoppingList() {
+
     }
 
     public ShoppingList(String listName, String owner) {
@@ -37,6 +40,8 @@ public class ShoppingList {
 
     public HashMap<String,Object> getTimestampCreated() { return timestampCreated;}
 
+    public ArrayList<String> getShoppers() {return shoppers;}
+
     @Exclude
     public long getTimeStampLastChanged() {
         return (long) timestampLastChanged.get("timestamp");
@@ -45,5 +50,15 @@ public class ShoppingList {
     @Exclude
     public long getTimeStampCreated() {
         return (long) timestampCreated.get("timestamp");
+    }
+
+    @Exclude
+    public void removeUserFromShoppersList(int pos) {
+        shoppers.remove(pos);
+    }
+
+    @Exclude
+    public void pushUserToShoppingList(String userId) {
+        shoppers.add(userId);
     }
 }

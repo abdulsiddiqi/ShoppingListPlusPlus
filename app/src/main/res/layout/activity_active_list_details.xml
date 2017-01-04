@@ -22,8 +22,7 @@
             android:layout_height="wrap_content"
             android:background="@android:color/white"
             android:orientation="horizontal"
-            android:padding="8dp"
-            android:visibility="gone">
+            android:padding="8dp">
 
             <TextView
                 android:id="@+id/text_view_people_shopping"

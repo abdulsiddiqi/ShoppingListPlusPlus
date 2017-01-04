@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -39,19 +41,30 @@ import java.util.List;
 public class ActiveListDetailsActivity extends BaseActivity {
     private static String LOG_TAG = ActiveListDetailsActivity.class.getSimpleName();
     private String list_pushID;
-    private String username;
+    // Variables for items
     private ListView mListItemsView;
     private List<Item> mItems;
     private List<String> mItemsIds;
-    private ShoppingList mShoppingList;
     private ActiveListItemsAdapter mItemsListAdapter;
+    // Reference to shoppinglist whose items are being displayed
+    private ShoppingList mShoppingList;
     // Firebase instance variables
     private DatabaseReference mShoppingListDatabaseReference;
+    private DatabaseReference mListTitleRef;
+    DatabaseReference mUserRef;
+    //User specific variables
+    private boolean isShopping;
+    private User mUser;
+    //Listeners
     private ChildEventListener mChildEventListener;
+    private ValueEventListener mUserEventListener;
+
+    private Button btn_toggle_shopping;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_active_list_details);
+
         //getting the list_pushID;
         Intent intent = getIntent();
         list_pushID = intent.getStringExtra(Constants.KEY_LIST_PUSH_ID);
@@ -64,6 +77,8 @@ public class ActiveListDetailsActivity extends BaseActivity {
         mShoppingListDatabaseReference = rootRef.getReference()
                 .child(Constants.FIREBASE_LOCATION_SHOPPING_LIST)
                 .child(list_pushID);
+        //determine if user is shopping currently or not in this shoppinglist
+        isShopping = false;
         mItemsListAdapter = new ActiveListItemsAdapter(this,
                 R.layout.fragment_shopping_lists, mItems, list_pushID, ActiveListDetailsActivity.this);
 
@@ -76,10 +91,36 @@ public class ActiveListDetailsActivity extends BaseActivity {
                 return true;
             }
         });
+        //getting username and storing in sharedpreferences
+        SharedPreferences sp = getSharedPreferences(getPackageName(),Context.MODE_PRIVATE);
+        String encoded_email = sp.getString(getString(R.string.pref_firebase_key),null);
+        mUserRef = FirebaseDatabase.getInstance().getReference()
+                .child(Constants.FIREBASE_LOCATION_USERS)
+                .child(encoded_email);
+        mUserEventListener = mUserRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    mUser = dataSnapshot.getValue(User.class);
+                }
+                else {
+                    Log.e(LOG_TAG, "username doesn't exist");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(LOG_TAG, "OnCancelled: " + databaseError.getMessage());
+            }
+        });
+
         mListItemsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.d(LOG_TAG, "onItemClick");
+                String username = mUser.getName();
+                if (!isShopping)
+                    return;
                 String item_pushId = mItemsIds.get(position);
                 DatabaseReference itemRef = FirebaseDatabase.getInstance().getReference()
                         .child(Constants.FIREBASE_LOCATION_SHOPPING_LIST)
@@ -107,7 +148,7 @@ public class ActiveListDetailsActivity extends BaseActivity {
 
         /* Calling invalidateOptionsMenu causes onCreateOptionsMenu to be called */
         invalidateOptionsMenu();
-        DatabaseReference mListTitleRef = rootRef.getReference()
+        mListTitleRef = rootRef.getReference()
                 .child(Constants.FIREBASE_LOCATION_ACTIVE_LIST)
                 .child(list_pushID);
         //Setting listener for changes in title
@@ -117,8 +158,21 @@ public class ActiveListDetailsActivity extends BaseActivity {
                 ShoppingList sl = dataSnapshot.getValue(ShoppingList.class);
                 if (sl != null) {
                     mShoppingList = sl;
-                    Log.d(LOG_TAG, "listName: " + sl.getListName());
                     setTitle(sl.getListName());
+                    String encoded_email = mUser.getEmail().replace(".",",");
+                    ArrayList<String> shoppers = mShoppingList.getShoppers();
+                    //if current user not found, then start of shopping
+                    if (shoppers != null && shoppers.indexOf(encoded_email) != -1) {
+                        isShopping = true;
+                        btn_toggle_shopping.setBackgroundColor(
+                                ContextCompat.getColor(ActiveListDetailsActivity.this,R.color.dark_grey));
+                        btn_toggle_shopping.setText(getString(R.string.button_stop_shopping));
+                    }
+                    else {
+                        btn_toggle_shopping.setBackgroundColor(
+                                ContextCompat.getColor(ActiveListDetailsActivity.this,R.color.primary_dark));
+                        btn_toggle_shopping.setText(getString(R.string.button_start_shopping));
+                    }
                 }
                 else {
                     finish();
@@ -131,30 +185,8 @@ public class ActiveListDetailsActivity extends BaseActivity {
                         databaseError.getMessage());
             }
         });
-        //getting username and storing in sharedpreferences
-        SharedPreferences sp = getSharedPreferences(getPackageName(),Context.MODE_PRIVATE);
-        String encoded_email = sp.getString(getString(R.string.pref_firebase_key),null);
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference()
-                .child(Constants.FIREBASE_LOCATION_USERS)
-                .child(encoded_email);
-        userRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    User user = dataSnapshot.getValue(User.class);
-                    username = user.getName();
-                }
-                else {
-                    Log.e(LOG_TAG, "username doesn't exist");
-                }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.e(LOG_TAG, "OnCancelled: " + databaseError.getMessage());
-            }
-        });
-        //Setting up child listener for each item
+        //Setting up child listener for items in shoppinglist
         mChildEventListener = new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
@@ -204,7 +236,9 @@ public class ActiveListDetailsActivity extends BaseActivity {
                 Log.d(LOG_TAG, "onCancelled");
             }
         };
+
         mShoppingListDatabaseReference.addChildEventListener(mChildEventListener);
+
     }
 
     @Override
@@ -279,8 +313,8 @@ public class ActiveListDetailsActivity extends BaseActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        //mItemsListAdapter.cleanup();
-        //mActiveListRef.removeEventListener(mActiveListRefListener);
+        mShoppingListDatabaseReference.removeEventListener(mChildEventListener);
+
     }
 
     private void initializeScreen() {
@@ -293,6 +327,7 @@ public class ActiveListDetailsActivity extends BaseActivity {
         }
         View footer = getLayoutInflater().inflate(R.layout.footer_empty,null);
         mListItemsView.addFooterView(footer);
+        btn_toggle_shopping = (Button) findViewById(R.id.button_shopping);
     }
     /**
      * Archive current list when user selects "Archive" menu item
@@ -354,12 +389,37 @@ public class ActiveListDetailsActivity extends BaseActivity {
      * This method is called when user taps "Start/Stop shopping" button
      */
     public void toggleShopping(View view) {
-
+        ArrayList<String> shoppers = mShoppingList.getShoppers();
+        String encoded_email = mUser.getEmail().replace(".",",");
+        if (isShopping) {
+            int index = shoppers.indexOf(encoded_email);
+            if (index == -1) {
+                Log.e(LOG_TAG, "ERROR finding user in shoppinglist shoppers list");
+            }
+            else {
+                mShoppingList.removeUserFromShoppersList(index);
+                mListTitleRef.setValue(mShoppingList);
+                Log.v(LOG_TAG, "Successfully removed user from shoppers list");
+                btn_toggle_shopping.setBackgroundColor(
+                        ContextCompat.getColor(ActiveListDetailsActivity.this,R.color.primary_dark));
+                btn_toggle_shopping.setText(getString(R.string.button_start_shopping));
+            }
+        }
+        else {
+            mShoppingList.pushUserToShoppingList(encoded_email);
+            mListTitleRef.setValue(mShoppingList);
+            btn_toggle_shopping.setBackgroundColor(
+                    ContextCompat.getColor(ActiveListDetailsActivity.this,R.color.dark_grey));
+            btn_toggle_shopping.setText(getString(R.string.button_stop_shopping));
+        }
+        isShopping = !isShopping;
     }
+
 
     private void changeItem(String boughtBy) {
 
     }
+
     public class ActiveListItemsAdapter extends ArrayAdapter<Item> {
         private final String LOG_TAG = ActiveListItemsAdapter.class.getSimpleName();
         private String list_pushID;
@@ -397,7 +457,7 @@ public class ActiveListDetailsActivity extends BaseActivity {
                 deleteItem.setVisibility(View.INVISIBLE);
                 boughtByLabel.setVisibility(View.VISIBLE);
                 boughtByUser.setVisibility(View.VISIBLE);
-                if (item.getBoughtBy().equals(username))
+                if (item.getBoughtBy().equals(mUser.getName()))
                     boughtByUser.setText(getString(R.string.text_you));
                 else
                     boughtByUser.setText(item.getBoughtBy());
