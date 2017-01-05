@@ -14,7 +14,7 @@ public class ShoppingList {
     private String owner;
     private HashMap<String,Object> timestampLastChanged;
     private HashMap<String,Object> timestampCreated;
-    private ArrayList<String> shoppers = new ArrayList<>();
+    private ArrayList<User> shoppers = new ArrayList<>();
     public ShoppingList() {
 
     }
@@ -40,7 +40,8 @@ public class ShoppingList {
 
     public HashMap<String,Object> getTimestampCreated() { return timestampCreated;}
 
-    public ArrayList<String> getShoppers() {return shoppers;}
+    public ArrayList<User> getShoppers() {return shoppers;}
+
 
     @Exclude
     public long getTimeStampLastChanged() {
@@ -58,7 +59,7 @@ public class ShoppingList {
     }
 
     @Exclude
-    public void pushUserToShoppingList(String userId) {
-        shoppers.add(userId);
+    public void pushUserToShoppingList(User user) {
+        shoppers.add(user);
     }
 }

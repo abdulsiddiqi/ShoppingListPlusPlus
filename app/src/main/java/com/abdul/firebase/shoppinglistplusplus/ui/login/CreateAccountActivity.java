@@ -124,12 +124,12 @@ public class CreateAccountActivity extends BaseActivity {
     public void onCreateAccountPressed(View view) {
         final String email = mEditTextEmailCreate.getText().toString();
         String password = mEditTextPasswordCreate.getText().toString();
-        String user = mEditTextUsernameCreate.getText().toString();
+        final String userName = mEditTextUsernameCreate.getText().toString();
         if (!isEmailValid(email)) {
             mEditTextEmailCreate.setError("Incorrect email");
             return;
         }
-        if (!isUserNameValid(user)) {
+        if (!isUserNameValid(userName)) {
             mEditTextUsernameCreate.setError("Incorrect username");
             return;
         }
@@ -162,7 +162,7 @@ public class CreateAccountActivity extends BaseActivity {
                             mAuthProgressDialog.dismiss();
                             return;
                         }
-                        createUserInFirebaseHelper(task.getResult().getUser().getEmail());
+                        createUserInFirebaseHelper(userName,task.getResult().getUser().getEmail());
                     }
                 });
     }
@@ -170,10 +170,10 @@ public class CreateAccountActivity extends BaseActivity {
     /**
      * Creates a new user in Firebase from the Java POJO
      */
-    private void createUserInFirebaseHelper(final String email) {
-        Log.d(LOG_TAG, "Email authenticated with " + email);
+    private void createUserInFirebaseHelper(String userName, final String email) {
+        Log.d(LOG_TAG, "Email authenticated with " + email + " username " + userName);
         String encodedEmail = email.replace(".",",");
-        final User user = new User(encodedEmail,email);
+        final User user = new User(userName,encodedEmail);
         DatabaseReference userRootRef = FirebaseDatabase.getInstance().getReference()
                 .child(Constants.FIREBASE_LOCATION_USERS);
         final DatabaseReference userInstance = userRootRef.child(encodedEmail);
@@ -203,6 +203,7 @@ public class CreateAccountActivity extends BaseActivity {
             }
         });
     }
+
     private void verifyEmail() {
         Log.d(LOG_TAG, "verifyEmail");
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();

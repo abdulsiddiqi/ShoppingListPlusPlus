@@ -53,15 +53,17 @@ public class ActiveListDetailsActivity extends BaseActivity {
     private DatabaseReference mListTitleRef;
     DatabaseReference mUserRef;
     //User specific variables
-    private boolean isShopping;
+    private boolean isShopping = false;
     private User mUser;
     //Listeners
     private ChildEventListener mChildEventListener;
     private ValueEventListener mUserEventListener;
 
     private Button btn_toggle_shopping;
+    private TextView txt_view_shoppers;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.v(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_active_list_details);
 
@@ -78,7 +80,7 @@ public class ActiveListDetailsActivity extends BaseActivity {
                 .child(Constants.FIREBASE_LOCATION_SHOPPING_LIST)
                 .child(list_pushID);
         //determine if user is shopping currently or not in this shoppinglist
-        isShopping = false;
+        Log.v(LOG_TAG, "isShopping: " + Boolean.toString(isShopping));
         mItemsListAdapter = new ActiveListItemsAdapter(this,
                 R.layout.fragment_shopping_lists, mItems, list_pushID, ActiveListDetailsActivity.this);
 
@@ -159,16 +161,20 @@ public class ActiveListDetailsActivity extends BaseActivity {
                 if (sl != null) {
                     mShoppingList = sl;
                     setTitle(sl.getListName());
-                    String encoded_email = mUser.getEmail().replace(".",",");
-                    ArrayList<String> shoppers = mShoppingList.getShoppers();
+                    ArrayList<User> shoppers = mShoppingList.getShoppers();
+                    displayShoppers(shoppers);
                     //if current user not found, then start of shopping
-                    if (shoppers != null && shoppers.indexOf(encoded_email) != -1) {
+                    Log.v(LOG_TAG, "mUser email: " + mUser.getEmail());
+                    if (shoppers != null && shoppers.indexOf(mUser) != -1) {
+                        Log.v(LOG_TAG, "user is shopping");
                         isShopping = true;
                         btn_toggle_shopping.setBackgroundColor(
                                 ContextCompat.getColor(ActiveListDetailsActivity.this,R.color.dark_grey));
                         btn_toggle_shopping.setText(getString(R.string.button_stop_shopping));
                     }
                     else {
+                        Log.v(LOG_TAG, "user is not shopping");
+                        isShopping = false;
                         btn_toggle_shopping.setBackgroundColor(
                                 ContextCompat.getColor(ActiveListDetailsActivity.this,R.color.primary_dark));
                         btn_toggle_shopping.setText(getString(R.string.button_start_shopping));
@@ -328,6 +334,7 @@ public class ActiveListDetailsActivity extends BaseActivity {
         View footer = getLayoutInflater().inflate(R.layout.footer_empty,null);
         mListItemsView.addFooterView(footer);
         btn_toggle_shopping = (Button) findViewById(R.id.button_shopping);
+        txt_view_shoppers = (TextView) findViewById(R.id.text_view_people_shopping);
     }
     /**
      * Archive current list when user selects "Archive" menu item
@@ -389,10 +396,9 @@ public class ActiveListDetailsActivity extends BaseActivity {
      * This method is called when user taps "Start/Stop shopping" button
      */
     public void toggleShopping(View view) {
-        ArrayList<String> shoppers = mShoppingList.getShoppers();
-        String encoded_email = mUser.getEmail().replace(".",",");
+        ArrayList<User> shoppers = mShoppingList.getShoppers();
         if (isShopping) {
-            int index = shoppers.indexOf(encoded_email);
+            int index = shoppers.indexOf(mUser);
             if (index == -1) {
                 Log.e(LOG_TAG, "ERROR finding user in shoppinglist shoppers list");
             }
@@ -400,25 +406,61 @@ public class ActiveListDetailsActivity extends BaseActivity {
                 mShoppingList.removeUserFromShoppersList(index);
                 mListTitleRef.setValue(mShoppingList);
                 Log.v(LOG_TAG, "Successfully removed user from shoppers list");
-                btn_toggle_shopping.setBackgroundColor(
-                        ContextCompat.getColor(ActiveListDetailsActivity.this,R.color.primary_dark));
-                btn_toggle_shopping.setText(getString(R.string.button_start_shopping));
             }
         }
         else {
-            mShoppingList.pushUserToShoppingList(encoded_email);
+            Log.v(LOG_TAG, "Shopping started");
+            mShoppingList.pushUserToShoppingList(mUser);
             mListTitleRef.setValue(mShoppingList);
-            btn_toggle_shopping.setBackgroundColor(
-                    ContextCompat.getColor(ActiveListDetailsActivity.this,R.color.dark_grey));
-            btn_toggle_shopping.setText(getString(R.string.button_stop_shopping));
         }
-        isShopping = !isShopping;
     }
 
+    private void displayShoppers(ArrayList<User> shoppers) {
+        if (shoppers.size() < 1) {
+            txt_view_shoppers.setText(getString(R.string.text_nobody_shopping));
+            return;
+        }
+        int index = shoppers.indexOf(mUser);
+        if (index != -1) {
+            txt_view_shoppers.setText(getString(R.string.text_you_are_shopping));
+        }
+        else {
+            txt_view_shoppers.setText(getString(R.string.text_other_is_shopping,shoppers.get(0).getName()));
+        }
+        if (shoppers.size() > 1) {
+            if (shoppers.size() == 2) {
+                //checking if current user shopping
+                if (index != -1) {
+                    index = (index + 1) % 2;
+                    String otherShopper = shoppers.get(index).getName();
+                    txt_view_shoppers.setText(getString(R.string.text_you_and_other_are_shopping,otherShopper));
+                }
+                else {
+                    txt_view_shoppers.setText(getString(R.string.text_other_and_other_are_shopping,
+                            shoppers.get(0).getName(),
+                            shoppers.get(1).getName()));
+                }
+            }
+            //more than 2 shoppers
+            else {
+                //checking if current user shopping
+                if (index != -1) {
+                    txt_view_shoppers.setText(getString(R.string.text_you_and_other_are_shopping, shoppers.size() - 1));
+                }
+                else {
+                    txt_view_shoppers.setText(getString(R.string.text_other_and_other_are_shopping,
+                            shoppers.get(0).getName(),
+                            shoppers.size() - 1));
+                }
+            }
+        }
+
+    }
 
     private void changeItem(String boughtBy) {
 
     }
+
 
     public class ActiveListItemsAdapter extends ArrayAdapter<Item> {
         private final String LOG_TAG = ActiveListItemsAdapter.class.getSimpleName();

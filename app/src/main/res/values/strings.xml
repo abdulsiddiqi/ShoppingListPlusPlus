@@ -70,6 +70,7 @@
     <string name="text_other_and_other_are_shopping">%1$s and %2$s are shopping</string>
     <string name="text_other_and_number_are_shopping">%1$s and %2$d others are shopping</string>
 
+    <string name="text_nobody_shopping">Nobody is shopping</string>
     <string name="bought_by">Bought by</string>
 
     <!--

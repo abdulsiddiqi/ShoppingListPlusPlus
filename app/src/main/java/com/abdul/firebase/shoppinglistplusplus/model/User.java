@@ -27,6 +27,18 @@ public class User {
     public String getEmail() { return email;}
     public HashMap<String,Object> getTimestampJoined() { return timestampJoined;}
 
+    public boolean equals(Object o) {
+        if (!(o instanceof User)) {
+            return false;
+        }
+        User other = (User) o;
+        return email.equals(other.getEmail());
+    }
+
+    public int hashCode() {
+        return email.hashCode();
+    }
+
     @Exclude
     public long getTimeStampJoined() {return (long) timestampJoined.get("timestamp");}
 
