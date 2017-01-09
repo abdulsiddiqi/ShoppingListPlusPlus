@@ -149,7 +149,7 @@
     <string name="error_email_taken">The email is already taken.</string>
     <string name="error_invalid_password_not_valid">Please enter a password that is at least 6 characters long.</string>
     <string name="error_cannot_be_empty">This cannot be empty.</string>
-
+    <string name="error_firebase_user_not_created">User not created in Firebase</string>
     <!-- Google Errors -->
     <string name="google_error_recoverable_oauth_error">"Recoverable Google OAuth error: "</string>
     <string name="google_error_google_play_services_not_available">Google Play Services are not available.</string>

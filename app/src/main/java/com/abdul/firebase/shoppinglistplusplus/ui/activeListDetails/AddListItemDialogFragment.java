@@ -2,6 +2,8 @@ package com.abdul.firebase.shoppinglistplusplus.ui.activeListDetails;
 
 
 import android.app.Dialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -62,7 +64,9 @@ public class AddListItemDialogFragment extends EditListDialogFragment {
             DatabaseReference itemRef = FirebaseDatabase.getInstance().getReference()
                     .child(Constants.FIREBASE_LOCATION_SHOPPING_LIST)
                     .child(push_id).push();
-            Item item = new Item(itemName,"Anonymous");
+            SharedPreferences sp = getActivity().getSharedPreferences(getActivity().getPackageName(), Context.MODE_PRIVATE);
+            String encoded_email = sp.getString((getString(R.string.pref_firebase_key)),"");
+            Item item = new Item(itemName,encoded_email);
             itemRef.setValue(item);
         }
     }

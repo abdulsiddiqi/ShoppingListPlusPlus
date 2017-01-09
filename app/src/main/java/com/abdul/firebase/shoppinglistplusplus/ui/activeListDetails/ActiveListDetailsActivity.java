@@ -264,7 +264,7 @@ public class ActiveListDetailsActivity extends BaseActivity {
         String shoppingListOwner = mShoppingList.getOwner();
         String loggedInUser;
         SharedPreferences sp = getSharedPreferences(getPackageName(),Context.MODE_PRIVATE);
-        loggedInUser = sp.getString(getString(R.string.pref_email),"");
+        loggedInUser = sp.getString(getString(R.string.pref_firebase_key),"");
         if (shoppingListOwner.equals(loggedInUser)) {
             remove.setVisible(true);
             edit.setVisible(true);
@@ -466,10 +466,12 @@ public class ActiveListDetailsActivity extends BaseActivity {
         private final String LOG_TAG = ActiveListItemsAdapter.class.getSimpleName();
         private String list_pushID;
         private Activity mActivity;
+        private SharedPreferences mSp;
         public ActiveListItemsAdapter(Context context, int resource, List<Item> objects, String list_pushID, Activity activity) {
             super(context,resource,objects);
             mActivity = activity;
             this.list_pushID = list_pushID;
+            mSp = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
         }
 
 
@@ -483,9 +485,16 @@ public class ActiveListDetailsActivity extends BaseActivity {
             TextView boughtByLabel = (TextView) convertView.findViewById(R.id.text_view_bought_by);
             TextView boughtByUser = (TextView) convertView.findViewById(R.id.text_view_bought_by_user);
             final ImageView deleteItem = (ImageView) convertView.findViewById(R.id.button_remove_item);
+
+            String loggedInUser = mSp.getString(getString(R.string.pref_firebase_key),"");
             final String item_pushID = mItemsIds.get(position);
             //Initially only delete button is shown
-            deleteItem.setVisibility(View.VISIBLE);
+            if (mShoppingList.getOwner().equals(loggedInUser) && item.getOwner().equals(loggedInUser)) {
+                deleteItem.setVisibility(View.VISIBLE);
+            }
+            else {
+                deleteItem.setVisibility(View.INVISIBLE);
+            }
             boughtByLabel.setVisibility(View.INVISIBLE);
             boughtByUser.setVisibility(View.INVISIBLE);
             deleteItem.setOnClickListener(new View.OnClickListener() {

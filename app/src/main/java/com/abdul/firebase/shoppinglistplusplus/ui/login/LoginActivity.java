@@ -82,6 +82,17 @@ public class LoginActivity extends BaseActivity {
                 if (user != null) {
                     // User is signed in
                     Log.d(LOG_TAG, "onAuthStateChanged:signed_in:" + user.getUid());
+                    Log.d(LOG_TAG, "logged in email:" + user.getEmail());
+                    String encoded_email = user.getEmail().replace(".",",");
+                    SharedPreferences sp = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sp.edit();
+                    editor.putString(getString(R.string.pref_firebase_key),encoded_email);
+                    editor.apply();
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    finish();
+
                 } else {
                     // User is signed out
                     Log.d(LOG_TAG, "onAuthStateChanged:signed_out");
@@ -212,34 +223,57 @@ public class LoginActivity extends BaseActivity {
                             return;
                         }
                         setAuthenticatedUserPasswordProvider(task.getResult());
-                        mAuthProgressDialog.dismiss();
-                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                        finish();
                     }
                 });
     }
 
     /**
-     * Helper method that makes sure a user is created if the user
-     * logs in with Firebase's email/password provider.
+     * Helper method to stored the required sharedPreferences
+     * data regarding the user
      * @param authData AuthData object returned from onAuthenticated
      */
     private void setAuthenticatedUserPasswordProvider(final AuthResult authData) {
-        String email = authData.getUser().getEmail();
+        String encoded_email = authData.getUser().getEmail().replace(".",",");
         Context context = getApplicationContext();
         SharedPreferences sp = context.getSharedPreferences(context.getPackageName(),Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        Log.d(LOG_TAG, "user_name for email/password: " + authData.getUser().getDisplayName());
-        editor.putString(getString(R.string.pref_firebase_key),email.replace(".",","));
-        editor.putString(getString(R.string.pref_provider),"Email");
-        editor.apply();
+        final SharedPreferences.Editor editor = sp.edit();
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference()
+                .child(Constants.FIREBASE_LOCATION_USERS)
+                .child(encoded_email);
+        userRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Log.v(LOG_TAG, "onDataChange");
+                if (dataSnapshot.exists()) {
+                    User user = dataSnapshot.getValue(User.class);
+                    editor.putString(getString(R.string.pref_firebase_key),user.getEmail());
+                    editor.putString(getString(R.string.pref_provider),"Email");
+                    editor.putString(getString(R.string.pref_user_name),user.getName());
+                    editor.apply();
+                    mAuthProgressDialog.dismiss();
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    finish();
+                }
+                else {
+                    mAuthProgressDialog.dismiss();
+                    Toast.makeText(getApplicationContext(),
+                            getString(R.string.error_firebase_user_not_created),Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(LOG_TAG, "onCancelled: " + databaseError.getMessage());
+            }
+        });
+
     }
 
     /**
-     * Helper method that makes sure a user is created if the user
-     * logs in with Firebase's Google login provider.
+     * Helper method to stored the required sharedPreferences
+     * data regarding the user
      * @param authData AuthData object returned from onAuthenticated
      */
     private void setAuthenticatedUserGoogle(final AuthResult authData){
@@ -266,11 +300,13 @@ public class LoginActivity extends BaseActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 String encoded_email = authData.getUser().getEmail().replace(".",",");
+                User user;
                 if (!dataSnapshot.exists()) {
-                    User user = new User(name,encoded_email);
+                    user = new User(name,encoded_email);
                     gUserRef.setValue(user);
                 }
                 else {
+                    user = dataSnapshot.getValue(User.class);
                     Log.d(LOG_TAG, "Google user already exists");
                 }
                 //Storing the email info for the google login for usage in MainActivity
@@ -279,6 +315,7 @@ public class LoginActivity extends BaseActivity {
                 SharedPreferences.Editor editor = sp.edit();
                 editor.putString(getString(R.string.pref_firebase_key),encoded_email);
                 editor.putString(getString(R.string.pref_provider),"Google");
+                editor.putString(getString(R.string.pref_user_name),user.getName());
                 editor.apply();
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);

@@ -99,7 +99,7 @@ public class AddListDialogFragment extends DialogFragment {
         String userEnteredName = mEditTextListName.getText().toString();
         String owner;
         SharedPreferences sp = getActivity().getSharedPreferences(getActivity().getPackageName(), Context.MODE_PRIVATE);
-        owner = sp.getString(getString(R.string.pref_email),"");
+        owner = sp.getString(getString(R.string.pref_firebase_key),"");
         ShoppingList sl = new ShoppingList(userEnteredName,owner);
         DatabaseReference listRef = FirebaseDatabase.getInstance().getReference()
                 .child(Constants.FIREBASE_LOCATION_ACTIVE_LIST);
